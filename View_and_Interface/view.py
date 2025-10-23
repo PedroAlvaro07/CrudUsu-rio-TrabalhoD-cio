@@ -72,6 +72,14 @@ class DespesaController(BaseHTTPRequestHandler):
             self.send_header("Content-type", "text/html; charset=utf-8")
             self.end_headers()
             self.wfile.write(conteudo)
+        
+        elif self.path == "/usuarios":
+            with open("View_and_Interface/user.html", "rb") as f:
+                conteudo = f.read()
+            self.send_response(200)
+            self.send_header("Content-type", "text/html; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(conteudo)
 
     def do_POST(self):
         if self.path == "/cadastrar":
@@ -174,3 +182,10 @@ class DespesaController(BaseHTTPRequestHandler):
             self.wfile.write(
                 b"<h3>Conta bancaria cadastrada com sucesso!</h3>")
             self.wfile.write(b'<a href="/menu">Voltar ao menu</a>')
+
+        elif self.path == "/user":
+            self.send_response(200)
+            self.send_header("Content-type", "text/html; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(b"<h1>User endpoint</h1>")
+

@@ -2,7 +2,6 @@ import uuid
 import pytest
 from datetime import datetime, timezone, timedelta
 
-# Helper to build valid payloads with optional overrides
 def make_payload(**overrides):
     base = {
         "nome": "Fulano de Tal",
@@ -47,7 +46,7 @@ def test_create_user_success(client):
 
 
 @pytest.mark.parametrize("length,valid", [
-    (0, True),    # allowed according to provided spec (0...100)
+    (0, True),    
     (1, True),
     (100, True),
     (101, False),
@@ -63,10 +62,10 @@ def test_nome_length_validation(client, length, valid):
 
 
 @pytest.mark.parametrize("matricula,valid", [
-    ("1234", False),                 # too short (<5)
-    ("1" * 5, True),                 # boundary 5
-    ("1" * 20, True),                # boundary 20
-    ("1" * 21, False),               # too long (>20)
+    ("1234", False),                 
+    ("1" * 5, True),                 
+    ("1" * 20, True),                
+    ("1" * 21, False),               
 ])
 def test_matricula_length_validation(client, matricula, valid):
     payload = make_payload(matricula=matricula)
@@ -131,7 +130,7 @@ def test_email_uniqueness(client):
 
 @pytest.mark.parametrize("date_str,valid", [
     (datetime.now(timezone.utc).isoformat(), True),
-    ("2020-01-01", True),                 # date-only ISO 8601 is acceptable
+    ("2020-01-01", True),                 
     ("01-01-2020", False),
     ("2020/01/01", False),
     ("not-a-date", False),
