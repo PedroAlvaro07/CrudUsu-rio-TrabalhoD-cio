@@ -3,6 +3,7 @@ from urllib.parse import parse_qs
 from Model.Despesa import Despesa
 import controler as ctl
 from html import escape
+from Controller import usuario as uc
 
 
 def _esc(v):
@@ -14,7 +15,7 @@ itens_list = comTrole.Get_Despesas()
 bancos = comTrole.get_Bancos_List()
 
 
-class DespesaController(BaseHTTPRequestHandler):
+class MainController(BaseHTTPRequestHandler):
 
     def do_GET(self):
         if self.path == "/":
@@ -74,8 +75,12 @@ class DespesaController(BaseHTTPRequestHandler):
             self.wfile.write(conteudo)
         
         elif self.path == "/usuarios":
-            with open("View_and_Interface/user.html", "rb") as f:
-                conteudo = f.read()
+            if self.path == "/usuarios/listar":
+                conteudo = uc.UsuarioController.listar()
+
+            else:
+                with open("View_and_Interface/user.html", "rb") as f:
+                    conteudo = f.read()
             self.send_response(200)
             self.send_header("Content-type", "text/html; charset=utf-8")
             self.end_headers()

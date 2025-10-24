@@ -1,11 +1,28 @@
+import uuid
+from enum import Enum
+
+class Tipo(Enum):
+    ALUNO = "ALUNO"
+    PROFESSOR = "PROFESSOR"
+    FUNCIONARIO = "FUNCIONARIO"
+
+class Status(Enum):
+    ATIVO = "ATIVO"
+    INATIVO = "INATIVO"
+    SUSPENSO = "SUSPENSO"
+
 class Usuario:
-    def __init__(self, nome, matricula, tipo, email, ativoDeRegistro, status):
+    def __init__(self, id, nome, matricula, tipo, email, ativoDeRegistro, status):
+        self.id = id if id is not None else uuid.uuid4()  # ou str(uuid.uuid4()) para guardar como string
         self.nome = nome
         self.matricula = matricula
         self.tipo = tipo
         self.email = email
         self.ativoDeRegistro = ativoDeRegistro
         self.status = status
+
+    def get_id(self):
+        return self.id
 
     def get_nome(self):
         return self.nome
@@ -23,7 +40,25 @@ class Usuario:
         return self.tipo
 
     def set_tipo(self, tipo):
-        self.tipo = tipo
+        # aceita Tipo, ou str (nome ou valor); lança ValueError se inválido
+        if isinstance(tipo, Tipo):
+            self.tipo = tipo
+            return
+
+        if isinstance(tipo, str):
+            # tenta pelo nome (Tipo['ALUNO']) então pelo valor (Tipo('ALUNO'))
+            try:
+                self.tipo = Tipo[tipo]
+                return
+            except KeyError:
+                pass
+            try:
+                self.tipo = Tipo(tipo)
+                return
+            except ValueError:
+                pass
+
+        raise ValueError(f"tipo inválido: {tipo}. Deve ser um membro de Tipo")
 
     def get_email(self):
         return self.email
@@ -41,4 +76,22 @@ class Usuario:
         return self.status
 
     def set_status(self, status):
-        self.status = status
+        # aceita Status, ou str (nome ou valor); lança ValueError se inválido
+        if isinstance(status, Status):
+            self.status = status
+            return
+
+        if isinstance(status, str):
+            # tenta pelo nome (Status['ATIVO']) então pelo valor (Status('ATIVO'))
+            try:
+                self.status = Status[status]
+                return
+            except KeyError:
+                pass
+            try:
+                self.status = Status(status)
+                return
+            except ValueError:
+                pass
+
+        raise ValueError(f"status inválido: {status}. Deve ser um membro de Status")

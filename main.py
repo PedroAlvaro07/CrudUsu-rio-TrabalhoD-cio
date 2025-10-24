@@ -8,7 +8,7 @@ def main():
   print("Starting Service...\n")
 
   
-  servidor = HTTPServer(("localhost", 8000), vw.DespesaController)
+  servidor = HTTPServer(("localhost", 8000), vw.MainController)
   print("Servidor rodando em http://localhost:8000")
   servidor.serve_forever()
 
