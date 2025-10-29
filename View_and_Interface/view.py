@@ -14,7 +14,6 @@ def _esc(v):
 comTrole = ctl.Controler(True)
 itens_list = comTrole.Get_Despesas()
 bancos = comTrole.get_Bancos_List()
-usuarioViewer = uv.UsuarioViewer()
 
 
 class MainController(BaseHTTPRequestHandler):
@@ -77,7 +76,7 @@ class MainController(BaseHTTPRequestHandler):
             self.wfile.write(conteudo)
         
         elif self.path == "/usuarios":
-            conteudo = usuarioViewer.call_menu()
+            conteudo = uv.UsuarioViewer.call_menu()
 
             self.send_response(200)
             self.send_header("Content-type", "text/html; charset=utf-8")
@@ -85,7 +84,7 @@ class MainController(BaseHTTPRequestHandler):
             self.wfile.write(conteudo)
 
         elif self.path == "/listar_usuarios":
-            conteudo = usuarioViewer.call_listar()
+            conteudo = uv.UsuarioViewer.call_listar()
 
             self.send_response(200)
             self.send_header("Content-type", "text/html; charset=utf-8")
