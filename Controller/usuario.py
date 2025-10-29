@@ -53,7 +53,7 @@ class UsuarioController:
             ),
         ]
 
-    def listar() -> List[u.Usuario]:
+    def listar(self) -> List[u.Usuario]:
         return [self._usuarios] if self._usuarios and len(self._usuarios) > 0 else []
 
     def obter_por_id(usuario_id: int) -> u.Usuario:
