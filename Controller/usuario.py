@@ -1,6 +1,7 @@
 from dataclasses import dataclass, asdict, replace
 from typing import List
 from Model import Usuario as u
+from View_and_Interface.interfaces import usuario as uv
 import re
 from datetime import datetime
 from enum import Enum
@@ -52,11 +53,11 @@ class UsuarioController:
             ),
         ]
 
-    def listar(self) -> List[u.Usuario]:
-        return [self._usuarios] if len(self._usuarios) > 0 else []
+    def listar() -> List[u.Usuario]:
+        return [UsuarioController._usuarios] if UsuarioController._usuarios and len(UsuarioController._usuarios) > 0 else []
 
-    def obter_por_id(self, usuario_id: int) -> u.Usuario:
-        u = next((x for x in self._usuarios if x.id == usuario_id), None)
+    def obter_por_id(usuario_id: int) -> u.Usuario:
+        u = next((x for x in UsuarioController._usuarios if x.id == usuario_id), None)
         return u if u else None
 
     def criar(self, dados: dict) -> u.Usuario:
@@ -197,16 +198,3 @@ class UsuarioController:
 
     def contar(self) -> int:
         return len(UsuarioController._usuarios)
-
-
-# Exemplo rápido de uso (remover ou comentar em produção)
-if __name__ == "__main__":
-    ctrl = UsuarioController()
-    print("Todos:", ctrl.listar())
-    novo = ctrl.criar({"nome": "Maria", "matricula": "MARI01", "tipo": "ALUNO", "email": "maria@ex", "ativoDeRegistro": "2025-02-01T00:00:00Z", "status": "ATIVO"})
-    print("Criado:", novo)
-    print("Obter id=1:", ctrl.obter_por_id(1))
-    ctrl.atualizar(2, {"status": "ATIVO"})
-    print("Após atualização:", ctrl.obter_por_id(2))
-    ctrl.deletar(3)
-    print("Após deleção:", ctrl.listar())

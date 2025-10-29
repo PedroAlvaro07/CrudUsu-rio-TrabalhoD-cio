@@ -4,6 +4,7 @@ from Model.Despesa import Despesa
 import controler as ctl
 from html import escape
 from Controller import usuario as uc
+from View_and_Interface.interfaces import usuario as uv
 
 
 def _esc(v):
@@ -13,6 +14,7 @@ def _esc(v):
 comTrole = ctl.Controler(True)
 itens_list = comTrole.Get_Despesas()
 bancos = comTrole.get_Bancos_List()
+usuarioViewer = uv.UsuarioViewer()
 
 
 class MainController(BaseHTTPRequestHandler):
@@ -75,16 +77,20 @@ class MainController(BaseHTTPRequestHandler):
             self.wfile.write(conteudo)
         
         elif self.path == "/usuarios":
-            if self.path == "/usuarios/listar":
-                conteudo = uc.UsuarioController.listar()
+            conteudo = usuarioViewer.call_menu()
 
-            else:
-                with open("View_and_Interface/user.html", "rb") as f:
-                    conteudo = f.read()
             self.send_response(200)
             self.send_header("Content-type", "text/html; charset=utf-8")
             self.end_headers()
             self.wfile.write(conteudo)
+
+        elif self.path == "/listar_usuarios":
+            conteudo = usuarioViewer.call_listar()
+
+            self.send_response(200)
+            self.send_header("Content-type", "text/html; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(conteudo.encode("utf-8"))
 
     def do_POST(self):
         if self.path == "/cadastrar":
