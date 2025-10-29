@@ -26,7 +26,7 @@ class UsuarioController:
         self._usuarios = [
             u.Usuario(
                 id=1,
-                nome="João",
+                nome="Joao",
                 matricula="ESOFT",
                 tipo="Aluno",
                 email="jp@fromTheSouth",
@@ -56,7 +56,7 @@ class UsuarioController:
     def listar(self) -> List[u.Usuario]:
         return [self._usuarios] if self._usuarios and len(self._usuarios) > 0 else []
 
-    def obter_por_id(usuario_id: int) -> u.Usuario:
+    def obter_por_id(self, usuario_id: int) -> u.Usuario:
         u = next((x for x in self._usuarios if x.id == usuario_id), None)
         return u if u else None
 

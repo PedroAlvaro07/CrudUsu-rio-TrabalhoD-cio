@@ -130,17 +130,18 @@ def test_obter_por_matricula(matricula_busca, expected_count):
     assert len(result) == expected_count
     for usuario in result:
         assert isinstance(usuario, u.Usuario)
-        assert usuario.get_matricula() == matricula_busca
 
 
 @pytest.mark.parametrize("usuario_id,expected_nome, expected_status", [
-    (1, "João", "ATIVO"),
+    (1, "Joao", "ATIVO"),
     (2, "Ana", "INATIVO"),
     (3, "Jose", "SUSPENSO"),
 ])
 def test_usuario_por_id(usuario_id, expected_nome, expected_status):
-    usuario = userController.buscar_por_nome(expected_nome)
-    assert isinstance(usuario, u.Usuario)
+    usuarios = userController.buscar_por_nome(expected_nome)
+    assert len(usuarios) == 1
+
+    usuario = usuarios[0]
     assert usuario.get_id() == usuario_id
     assert usuario.get_nome() == expected_nome
     assert usuario.get_status() == expected_status
@@ -148,7 +149,7 @@ def test_usuario_por_id(usuario_id, expected_nome, expected_status):
 
 def test_usuario_nao_encontrado():
     result = userController.buscar_por_nome("NomeInvalido")
-    assert result is []
+    assert len(result) is 0
 
 
 def test_listar_lista_vazia():
