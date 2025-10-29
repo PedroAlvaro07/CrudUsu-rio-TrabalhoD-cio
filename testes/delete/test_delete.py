@@ -103,18 +103,25 @@ lista_usuarios = [
     ),
 ]
 
-userController = uc.UsuarioController(usuarios = lista_usuarios)
+userController = uc.UsuarioController(usuarios = lista_usuarios.copy())
 
-@pytest.mark.parametrize("user_id", [
-    (4),
-    (1),
-    (2),
-])
-def test_delete_existendo_um_cliente_id(client, user_id):
-    item_id, _ = created_user
-    result = userController.delete(user_id)
+@pytest.mark.parametrize("user_id", [4, 1, 2])
+def test_delete_existing_user_by_id(user_id):
+
+    print(f"Attempting to delete user with ID: {userController._usuarios[user_id - 1]}")
+    user = userController._usuarios[user_id - 1]
+
+    print(f"Deleting user: {user.nome} with ID: {user.id}")
+
+    # Attempt to delete user
+    result = userController.deletar(user_id)
+    
+    # Check if deletion was successful
     assert result is True
+    # Verify user no longer exists
     assert userController.obter_por_id(user_id) is None
 
-def test_delete_nonexistent_user_by_id(client):
-    assert userController.delete(9999) is False
+def test_delete_nonexistent_user_by_id():
+    # Try to delete user with non-existent ID
+    result = userController.deletar(9999)
+    assert result is False

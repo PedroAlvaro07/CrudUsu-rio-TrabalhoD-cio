@@ -16,14 +16,14 @@ class UsuarioController:
 
     def __init__(self, usuarios: List[u.Usuario] = None):
         # popula apenas uma vez
-        if not UsuarioController._usuarios and usuarios is None:
+        if not self._usuarios and usuarios is None:
             self._seed()
         else:
             self._usuarios = usuarios or []
 
 
     def _seed(self):
-        UsuarioController._usuarios = [
+        self._usuarios = [
             u.Usuario(
                 id=1,
                 nome="João",
@@ -54,10 +54,10 @@ class UsuarioController:
         ]
 
     def listar() -> List[u.Usuario]:
-        return [UsuarioController._usuarios] if UsuarioController._usuarios and len(UsuarioController._usuarios) > 0 else []
+        return [self._usuarios] if self._usuarios and len(self._usuarios) > 0 else []
 
     def obter_por_id(usuario_id: int) -> u.Usuario:
-        u = next((x for x in UsuarioController._usuarios if x.id == usuario_id), None)
+        u = next((x for x in self._usuarios if x.id == usuario_id), None)
         return u if u else None
 
     def criar(self, dados: dict) -> u.Usuario:
@@ -78,7 +78,7 @@ class UsuarioController:
         email = str(dados["email"]).strip()
         if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
             raise ValueError("Email inválido")
-        if any((usr.email or "").lower() == email.lower() for usr in UsuarioController._usuarios):
+        if any((usr.email or "").lower() == email.lower() for usr in self._usuarios):
             raise ValueError("Email já cadastrado")
 
         # matricula: alfanumérica 5-20 e única (case-insensitive)
@@ -140,7 +140,7 @@ class UsuarioController:
         return usuario
 
     def atualizar(self, usuario_id: int, dados: dict) -> u.Usuario:
-        for idx, u in enumerate(UsuarioController._usuarios):
+        for idx, u in enumerate(self._usuarios):
             if u.id == usuario_id:
                 # mantemos o id original, atualizamos os demais campos se fornecidos
                 atualizado = replace(
@@ -152,14 +152,15 @@ class UsuarioController:
                     ativoDeRegistro=dados.get("ativoDeRegistro", u.ativoDeRegistro),
                     status=dados.get("status", u.status),
                 )
-                UsuarioController._usuarios[idx] = atualizado
+                self._usuarios[idx] = atualizado
                 return atualizado
         return None
 
     def deletar(self, usuario_id: int) -> bool:
-        for idx, u in enumerate(UsuarioController._usuarios):
+        for idx, u in enumerate(self._usuarios):
+            print(f"Checking user with ID: {u.id} against target ID: {usuario_id}")
             if u.id == usuario_id:
-                del UsuarioController._usuarios[idx]
+                del self._usuarios[idx]
                 return True
         return False
 
@@ -174,7 +175,7 @@ class UsuarioController:
             pattern = re.compile(matricula, re.IGNORECASE)
         except re.error:
             pattern = re.compile(re.escape(matricula), re.IGNORECASE)
-        return [usr for usr in UsuarioController._usuarios if usr.matricula and pattern.search(usr.matricula)]
+        return [usr for usr in self._usuarios if usr.matricula and pattern.search(usr.matricula)]
 
 
     def buscar_por_tipo(self, tipo: str) -> List[u.Usuario]:
@@ -182,7 +183,7 @@ class UsuarioController:
             return []
         input_tipo = str(tipo).upper()
 
-        return [usr for usr in UsuarioController._usuarios if usr.get_tipo().upper() == input_tipo.upper()]
+        return [usr for usr in self._usuarios if usr.get_tipo().upper() == input_tipo.upper()]
 
     def buscar_por_nome(self, nome: str) -> List[u.Usuario]:
         """Busca por nome usando regex (case-insensitive, permite busca por pedaço da palavra).
@@ -194,7 +195,7 @@ class UsuarioController:
             pattern = re.compile(nome, re.IGNORECASE)
         except re.error:
             pattern = re.compile(re.escape(nome), re.IGNORECASE)
-        return [usr for usr in UsuarioController._usuarios if usr.get_nome() and pattern.search(usr.get_nome())]
+        return [usr for usr in self._usuarios if usr.get_nome() and pattern.search(usr.get_nome())]
 
     def contar(self) -> int:
-        return len(UsuarioController._usuarios)
+        return len(self._usuarios)
