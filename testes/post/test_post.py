@@ -6,6 +6,8 @@ from View_and_Interface import view
 from Controller import usuario as uc
 from Model import Usuario as u
 
+usuarioController = uc.UsuarioController()
+
 def make_payload(**overrides):
     base = {
         "id": 1,
@@ -21,7 +23,6 @@ def make_payload(**overrides):
     return base
 
 def create_user(dados: dict):
-    usuarioController = uc.UsuarioController()
     return usuarioController.criar(dados)
 
 
@@ -131,7 +132,7 @@ def test_email_formato_valido(email, valid):
 
 
 def test_email_unico():
-    email = f"user.{uuid.uuid4().hex[:8]}@example.com"
+    email = f"user.testando@example.com"
     p1 = make_payload(email=email)
     p2 = make_payload(email=email)
     r1 = create_user(p1)

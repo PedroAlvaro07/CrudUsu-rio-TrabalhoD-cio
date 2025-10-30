@@ -14,7 +14,7 @@ from Model import Usuario as u
 lista_usuarios = [
     u.Usuario(
         id=1,
-        nome="João",
+        nome="Joao",
         matricula="ESOFT01-C",
         tipo="ALUNO",
         email="joao@example.com",
@@ -41,10 +41,10 @@ lista_usuarios = [
     ),
     u.Usuario(
         id=4,
-        nome="Mariana",
+        nome="Maria",
         matricula="ESOFT01-B",
         tipo="ALUNO",
-        email="mariana@example.com",
+        email="maria@example.com",
         ativoDeRegistro="2025-01-15T10:30:00Z",
         status="ATIVO",
     ),
@@ -77,7 +77,7 @@ lista_usuarios = [
     ),
     u.Usuario(
         id=8,
-        nome="Luciana",
+        nome="Lucia",
         matricula="PROF04",
         tipo="PROFESSOR",
         email="luciana@example.com",
@@ -104,7 +104,7 @@ lista_usuarios = [
     ),
 ]
 
-userController = uc.UsuarioController(usuarios = lista_usuarios)
+userController = uc.UsuarioController(usuarios = lista_usuarios.copy())
 
 @pytest.mark.parametrize("tipo_busca, expected_count", [
     ("ALUNO", 4),

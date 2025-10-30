@@ -95,3 +95,33 @@ class Usuario:
                 pass
 
         raise ValueError(f"status inválido: {status}. Deve ser um membro de Status")
+        
+    def replace(self, **kwargs):
+        """
+        Creates a new Usuario instance with updated values.
+        Any attribute not specified in kwargs will keep its current value.
+        """
+        # Get current values for all attributes
+        current_values = {
+            'id': self.id,
+            'nome': self.nome,
+            'matricula': self.matricula,
+            'tipo': self.tipo,
+            'email': self.email,
+            'ativoDeRegistro': self.ativoDeRegistro,
+            'status': self.status
+        }
+        
+        # Update with new values from kwargs
+        current_values.update(kwargs)
+        
+        # Create new instance with updated values
+        return Usuario(
+            id=current_values['id'],
+            nome=current_values['nome'],
+            matricula=current_values['matricula'],
+            tipo=current_values['tipo'],
+            email=current_values['email'],
+            ativoDeRegistro=current_values['ativoDeRegistro'],
+            status=current_values['status']
+        )

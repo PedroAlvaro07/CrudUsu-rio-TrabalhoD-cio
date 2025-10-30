@@ -139,22 +139,74 @@ class UsuarioController:
         UsuarioController._usuarios.append(usuario)
         return usuario
 
-    def atualizar(self, usuario_id: int, dados: dict) -> u.Usuario:
-        for idx, u in enumerate(self._usuarios):
-            if u.id == usuario_id:
-                # mantemos o id original, atualizamos os demais campos se fornecidos
-                atualizado = replace(
-                    u,
-                    nome=dados.get("nome", u.nome),
-                    matricula=dados.get("matricula", u.matricula),
-                    tipo=dados.get("tipo", u.tipo),
-                    email=dados.get("email", u.email),
-                    ativoDeRegistro=dados.get("ativoDeRegistro", u.ativoDeRegistro),
-                    status=dados.get("status", u.status),
-                )
-                self._usuarios[idx] = atualizado
-                return atualizado
-        return None
+    def atualizar(self, usuario_id: int, dados: dict) -> bool:
+        # Validação do ID
+        if not isinstance(usuario_id, int) or usuario_id <= 0:
+            raise ValueError("ID deve ser um número inteiro positivo")
+
+        # Validação dos dados
+        if not dados:
+            raise ValueError("Dados de atualização não podem estar vazios")
+
+        # Não permitir alteração de ID
+        if "id" in dados:
+            raise ValueError("ID não pode ser alterado")
+
+        # Não permitir alteração de ativoDeRegistro
+        if "ativoDeRegistro" in dados:
+            raise ValueError("Data de registro não pode ser alterada")
+
+        usuario = next((u for u in self._usuarios if u.id == usuario_id), None)
+        if not usuario:
+            raise ValueError("Usuário não encontrado")
+
+        # Validações dos campos
+        if "nome" in dados:
+            nome = str(dados["nome"]).strip()
+            if not (1 <= len(nome) <= 100):
+                raise ValueError("Nome deve ter entre 1 e 100 caracteres")
+
+        if "matricula" in dados:
+            matricula = str(dados["matricula"]).strip()
+            if not (5 <= len(matricula) <= 20):
+                raise ValueError("Matrícula deve ter entre 5 e 20 caracteres alfanuméricos")
+            if not matricula.isalnum():
+                raise ValueError("Matrícula deve conter apenas caracteres alfanuméricos")
+            # Verificar duplicata de matrícula
+            if any(u.matricula.lower() == matricula.lower() for u in self._usuarios if u.id != usuario_id):
+                raise ValueError("Matrícula já está em uso")
+
+        if "email" in dados and dados["email"] is not None and dados["email"] != "":
+            email = str(dados["email"]).strip()
+            if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
+                raise ValueError("Email deve ter formato válido")
+            # Verificar duplicata de email
+            if any(u.email.lower() == email.lower() for u in self._usuarios if u.id != usuario_id):
+                raise ValueError("Email já está em uso")
+
+        if "tipo" in dados:
+            tipo = str(dados["tipo"]).strip().upper()
+            tipos_validos = ["ALUNO", "PROFESSOR", "FUNCIONARIO"]
+            if tipo not in tipos_validos:
+                raise ValueError("Tipo deve ser ALUNO, PROFESSOR ou FUNCIONARIO")
+
+        if "status" in dados:
+            status = str(dados["status"]).strip().upper()
+            status_validos = ["ATIVO", "INATIVO", "SUSPENSO"]
+            if status not in status_validos:
+                raise ValueError("Status deve ser ATIVO, INATIVO ou SUSPENSO")
+
+        # Atualizar os campos
+        idx = self._usuarios.index(usuario)
+        atualizado = usuario.replace(
+            nome=dados.get("nome", usuario.nome),
+            matricula=dados.get("matricula", usuario.matricula),
+            tipo=dados.get("tipo", usuario.tipo),
+            email=dados.get("email", usuario.email),
+            status=dados.get("status", usuario.status)
+        )
+        self._usuarios[idx] = atualizado
+        return True
 
     def deletar(self, usuario_id: int) -> bool:
         for idx, u in enumerate(self._usuarios):
