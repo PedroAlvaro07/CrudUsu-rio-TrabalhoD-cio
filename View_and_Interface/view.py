@@ -14,6 +14,7 @@ def _esc(v):
 comTrole = ctl.Controler(True)
 itens_list = comTrole.Get_Despesas()
 bancos = comTrole.get_Bancos_List()
+controller = uc.UsuarioController()
 
 
 class MainController(BaseHTTPRequestHandler):
@@ -84,7 +85,15 @@ class MainController(BaseHTTPRequestHandler):
             self.wfile.write(conteudo)
 
         elif self.path == "/listar_usuarios":
-            conteudo = uv.UsuarioViewer.call_listar()
+            conteudo = uv.UsuarioViewer.call_listar(controller=controller)
+
+            self.send_response(200)
+            self.send_header("Content-type", "text/html; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(conteudo.encode("utf-8"))
+
+        elif self.path == "/cadastrar_usuario":
+            conteudo = uv.UsuarioViewer.call_cadastrar()
 
             self.send_response(200)
             self.send_header("Content-type", "text/html; charset=utf-8")
@@ -170,6 +179,50 @@ class MainController(BaseHTTPRequestHandler):
                 self.send_header("Content-type", "text/html; charset=utf-8")
                 self.end_headers()
                 self.wfile.write(conteudo.encode("utf-8"))
+        elif self.path == "/cadastrar_usuario":
+            try:
+                tamanho = int(self.headers["Content-Length"])
+                dados = self.rfile.read(tamanho).decode("utf-8")
+                params = parse_qs(dados)
+
+
+                nome = params.get("nome", "")
+                matricula = params.get("matricula", "")
+                tipo = params.get("tipo", "")
+                email = params.get("email", "")
+                ativoDeRegistro = params.get("ativoDeRegistro", "")
+                status = params.get("status", "")
+
+                print(f"Recebeu dados: {nome}, {matricula}, {tipo}, {email}, {ativoDeRegistro}, {status}")
+
+                user_dict = {
+                    "nome": nome[0] if nome else "",
+                    "matricula": matricula[0] if matricula else "",
+                    "tipo": tipo[0] if tipo else "",
+                    "email": email[0] if email else "",
+                    "ativoDeRegistro": ativoDeRegistro[0] if ativoDeRegistro else "",
+                    "status": status[0] if status else ""
+                }
+
+                controller.criar(dados=user_dict)
+                print("Usuário criado com sucesso.")
+                # Redireciona para a lista de usuários
+                self.send_response(302)
+                self.send_header("Location", "/listar_usuarios")
+                self.end_headers()
+            except Exception as e:
+                # Redireciona para a página de cadastro com erro
+                conteudo = uv.UsuarioViewer.call_cadastrar()
+                # Substitui placeholder de erro se existir no template
+                conteudo = conteudo.replace("<!--MENSAGEM_ERRO-->", f"<p class='erro'>Erro ao cadastrar usuário: {e}</p>")
+                
+                self.send_response(200)
+                self.send_header("Content-type", "text/html; charset=utf-8")
+                self.end_headers()
+                self.wfile.write(conteudo.encode("utf-8"))
+                print(f"Erro ao criar usuário: {e}")
+
+            
 
         elif self.path == "/cadastrar_conta":
             content_length = int(self.headers['Content-Length'])

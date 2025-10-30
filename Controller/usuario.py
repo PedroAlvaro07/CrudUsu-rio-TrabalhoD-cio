@@ -83,7 +83,7 @@ class UsuarioController:
 
         # matricula: alfanumérica 5-20 e única (case-insensitive)
         matricula = str(dados["matricula"]).strip()
-        if not (5 <= len(matricula) <= 20 and matricula.isalnum()):
+        if not (5 <= len(matricula) and len(matricula) <= 20):
             raise ValueError("Matrícula deve ser alfanumérica com 5 a 20 caracteres")
         if any((usr.matricula or "").lower() == matricula.lower() for usr in UsuarioController._usuarios):
             raise ValueError("Matrícula já cadastrada")
@@ -126,7 +126,7 @@ class UsuarioController:
             raise ValueError("ativoDeRegistro deve estar em formato ISO 8601 (ex: 2025-01-15T10:30:00Z)")
 
         # criar id
-        next_id = max((usr.id for usr in UsuarioController._usuarios), default=0) + 1
+        next_id = max((usr.id for usr in self._usuarios), default=0) + 1
         usuario = u.Usuario(
             id=dados.get("id", next_id),
             nome=nome,
@@ -136,7 +136,7 @@ class UsuarioController:
             ativoDeRegistro=ativo,
             status=status_val,
         )
-        UsuarioController._usuarios.append(usuario)
+        self._usuarios.append(usuario)
         return usuario
 
     def atualizar(self, usuario_id: int, dados: dict) -> bool:

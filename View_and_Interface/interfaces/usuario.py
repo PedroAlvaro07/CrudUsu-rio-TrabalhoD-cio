@@ -11,16 +11,19 @@ class UsuarioViewer:
 
     @staticmethod
     def create_usuario_element(usuario: u.Usuario) -> str:
-        return (f"<a href=\"/detalhe_despesa?id=1\" class=\"item\">"
-                f"<span class=\"id\">{_esc(usuario.id)} </span>"
-                f"<span class=\"nome\">{_esc(usuario.nome)} </span>"
-                f"<span class=\"tipo\">{_esc(usuario.tipo)} </span>"
-                f"<span class=\"email\">{_esc(usuario.email)} </span>"
-                f"<span class=\"status\">{_esc(usuario.status)} </span>"
-                f"</a>")
+
+        return (
+            "<tr>"
+            f"<td>{_esc(usuario.id)}</td>"
+            f"<td>{_esc(usuario.nome)}</td>"
+            f"<td>{_esc(usuario.tipo)}</td>"
+            f"<td>{_esc(usuario.email)}</td>"
+            f"<td>{_esc(usuario.status)}</td>"
+            "</tr>"
+        )
 
     @staticmethod
-    def call_listar() -> str:
+    def call_listar(controller) -> str:
         lista = ""
 
         with open("View_and_Interface/views/lista_user.html", "r",
@@ -28,7 +31,6 @@ class UsuarioViewer:
             print("Leu Pagina")
             conteudo = f.read()
 
-            controller = uc.UsuarioController()
             users = controller.listar()
             # controller may return nested list in some implementations; normalize
             if isinstance(users, list) and len(users) == 1 and isinstance(users[0], list):
@@ -38,6 +40,18 @@ class UsuarioViewer:
                 print(f'Iterou com user -> {getattr(usuario, "nome", None)}')
                 newElement = UsuarioViewer.create_usuario_element(usuario)
                 lista += newElement
+
+            conteudo = conteudo.replace("<!-- Dados -->", lista)
+
+        return conteudo
+    
+    @staticmethod
+    def call_cadastrar() -> str:
+        lista = ""
+
+        with open("View_and_Interface/views/cadastro_user.html", "r",
+                  encoding="utf-8") as f:
+            conteudo = f.read()
 
             conteudo = conteudo.replace("<!-- Dados -->", lista)
 
