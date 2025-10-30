@@ -28,7 +28,7 @@ class UsuarioController:
                 id=1,
                 nome="Joao",
                 matricula="ESOFT",
-                tipo="Aluno",
+                tipo="ALUNO",
                 email="jp@fromTheSouth",
                 ativoDeRegistro="2025-01-15T10:30:00Z",
                 status="ATIVO",
@@ -147,14 +147,6 @@ class UsuarioController:
         # Validação dos dados
         if not dados:
             raise ValueError("Dados de atualização não podem estar vazios")
-
-        # Não permitir alteração de ID
-        if "id" in dados:
-            raise ValueError("ID não pode ser alterado")
-
-        # Não permitir alteração de ativoDeRegistro
-        if "ativoDeRegistro" in dados:
-            raise ValueError("Data de registro não pode ser alterada")
 
         usuario = next((u for u in self._usuarios if u.id == usuario_id), None)
         if not usuario:

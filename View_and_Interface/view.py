@@ -5,7 +5,7 @@ import controler as ctl
 from html import escape
 from Controller import usuario as uc
 from View_and_Interface.interfaces import usuario as uv
-
+from urllib.parse import urlparse, parse_qs
 
 def _esc(v):
     return escape("" if v is None else str(v))
@@ -100,6 +100,18 @@ class MainController(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(conteudo.encode("utf-8"))
 
+        elif  "/atualizar_usuario" in self.path:
+            parsed_url = urlparse(self.path)
+            query_params = parse_qs(parsed_url.query)
+            user_id = query_params.get('id', [''])[0]
+
+            conteudo = uv.UsuarioViewer.call_atualizar(controller=controller, user_id=user_id)
+
+            self.send_response(200)
+            self.send_header("Content-type", "text/html; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(conteudo.encode("utf-8"))
+
     def do_POST(self):
         if self.path == "/cadastrar":
             tamanho = int(self.headers["Content-Length"])
@@ -136,6 +148,90 @@ class MainController(BaseHTTPRequestHandler):
             self.send_header("Content-type", "text/html; charset=utf-8")
             self.end_headers()
             self.wfile.write(conteudo.encode("utf-8"))
+
+        # Check for POST request to /atualizar_usuario and which button was pressed
+        elif "/atualizar_usuario" in self.path:
+            tamanho = int(self.headers["Content-Length"])
+            dados = self.rfile.read(tamanho).decode("utf-8")
+            params = parse_qs(dados)
+            
+            # Check which button was pressed
+            if "btn_atualizar" in params:
+                # Handle update button
+                parsed_url = urlparse(self.path)
+                query_params = parse_qs(parsed_url.query)
+                user_id = query_params.get('id', [''])[0]
+                
+                # Validate user_id
+                if not user_id or not user_id.strip():
+                    self.send_response(400)
+                    self.send_header("Content-type", "text/html; charset=utf-8")
+                    self.end_headers()
+                    self.wfile.write(b"<h1>400 - ID do usuario nao fornecido</h1>")
+                    return
+                
+                # Extract form data for updating
+                nome = params.get("nome", [""])[0]
+                matricula = params.get("matricula", [""])[0]
+                tipo = params.get("tipo", [""])[0]
+                email = params.get("email", [""])[0]
+                ativoDeRegistro = params.get("ativoDeRegistro", [""])[0]
+                status = params.get("status", [""])[0]
+                
+                user_dict = {
+                    "nome": nome,
+                    "matricula": matricula,
+                    "tipo": tipo,
+                    "email": email,
+                    "ativoDeRegistro": ativoDeRegistro,
+                    "status": status
+                }
+                
+                try:
+                    controller.atualizar(int(user_id), user_dict)
+                    # Redirect to user list after successful update
+                    self.send_response(302)
+                    self.send_header("Location", "/listar_usuarios")
+                    self.end_headers()
+                except Exception as e:
+                    # Handle update error
+                    conteudo = uv.UsuarioViewer.call_atualizar(controller=controller, user_id=user_id)
+                    conteudo = conteudo.replace("<!--MENSAGEM_ERRO-->", f"<p class='erro'>Erro ao atualizar usuário: {e}</p>")
+                    
+                    self.send_response(200)
+                    self.send_header("Content-type", "text/html; charset=utf-8")
+                    self.end_headers()
+                    self.wfile.write(conteudo.encode("utf-8"))
+                    
+            elif "btn_excluir" in params:
+                # Handle delete button
+                parsed_url = urlparse(self.path)
+                query_params = parse_qs(parsed_url.query)
+                user_id = query_params.get('id', [''])[0]
+                
+                # Validate user_id
+                if not user_id or not user_id.strip():
+                    self.send_response(400)
+                    self.send_header("Content-type", "text/html; charset=utf-8")
+                    self.end_headers()
+                    self.wfile.write(b"<h1>400 - ID do usuario nao fornecido</h1>")
+                    return
+                
+                try:
+                    controller.deletar(int(user_id))
+                    # Redirect to user list after successful deletion
+                    self.send_response(302)
+                    self.send_header("Location", "/listar_usuarios")
+                    self.end_headers()
+                except Exception as e:
+                    # Handle deletion error
+                    conteudo = uv.UsuarioViewer.call_atualizar(controller=controller, user_id=user_id)
+                    conteudo = conteudo.replace("<!--MENSAGEM_ERRO-->", f"<p class='erro'>Erro ao excluir usuário: {e}</p>")
+                    
+                    self.send_response(200)
+                    self.send_header("Content-type", "text/html; charset=utf-8")
+                    self.end_headers()
+                    self.wfile.write(conteudo.encode("utf-8"))
 
         elif self.path == "/calcular_total":
             tamanho = int(self.headers["Content-Length"])
