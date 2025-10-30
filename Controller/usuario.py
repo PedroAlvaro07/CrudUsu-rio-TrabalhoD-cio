@@ -85,7 +85,7 @@ class UsuarioController:
         matricula = str(dados["matricula"]).strip()
         if not (5 <= len(matricula) and len(matricula) <= 20):
             raise ValueError("Matrícula deve ser alfanumérica com 5 a 20 caracteres")
-        if any((usr.matricula or "").lower() == matricula.lower() for usr in UsuarioController._usuarios):
+        if any((usr.matricula or "").lower() == matricula.lower() for usr in self._usuarios):
             raise ValueError("Matrícula já cadastrada")
 
         # tipo e status: devem existir nos enums em Model.Usuario (se os enums estiverem definidos)
@@ -173,7 +173,7 @@ class UsuarioController:
             if not matricula.isalnum():
                 raise ValueError("Matrícula deve conter apenas caracteres alfanuméricos")
             # Verificar duplicata de matrícula
-            if any(u.matricula.lower() == matricula.lower() for u in self._usuarios if u.id != usuario_id):
+            if any((u.matricula or "").lower() == matricula.lower() for u in self._usuarios if u.id != usuario_id):
                 raise ValueError("Matrícula já está em uso")
 
         if "email" in dados and dados["email"] is not None and dados["email"] != "":
@@ -181,7 +181,7 @@ class UsuarioController:
             if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
                 raise ValueError("Email deve ter formato válido")
             # Verificar duplicata de email
-            if any(u.email.lower() == email.lower() for u in self._usuarios if u.id != usuario_id):
+            if any((u.email or "").lower() == email.lower() for u in self._usuarios if u.id != usuario_id):
                 raise ValueError("Email já está em uso")
 
         if "tipo" in dados:

@@ -97,6 +97,28 @@ class Usuario:
         raise ValueError(f"status inválido: {status}. Deve ser um membro de Status")
         
     def replace(self, **kwargs):
+        """Cria uma nova instância com os campos atualizados"""
+        # Pegando os valores atuais para campos não fornecidos
+        id = kwargs.get('id', self.id)
+        nome = kwargs.get('nome', self.nome)
+        matricula = kwargs.get('matricula', self.matricula)
+        tipo = kwargs.get('tipo', self.tipo)
+        email = kwargs.get('email', self.email)
+        ativoDeRegistro = kwargs.get('ativoDeRegistro', self.ativoDeRegistro)
+        status = kwargs.get('status', self.status)
+
+        # Retorna uma nova instância com os valores atualizados
+        return Usuario(
+            id=id,
+            nome=nome,
+            matricula=matricula,
+            tipo=tipo,
+            email=email,
+            ativoDeRegistro=ativoDeRegistro,
+            status=status
+        )
+        
+    def replace(self, **kwargs):
         """
         Creates a new Usuario instance with updated values.
         Any attribute not specified in kwargs will keep its current value.

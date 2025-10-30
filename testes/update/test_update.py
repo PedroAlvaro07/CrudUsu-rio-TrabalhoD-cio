@@ -24,8 +24,17 @@ class TestUpdateUsuario:
             ativoDeRegistro="2025-01-15T10:30:00Z",
             status="ATIVO"
         )
-        # Inicializa o controller com o usuário de teste
-        self.client = uc.UsuarioController(usuarios=[self.usuario_valido])
+        self.usuario_existente = Usuario.Usuario(
+            id=2,
+            nome="Maria Silva",
+            matricula="PROF54321",  # Matrícula que será testada como duplicada
+            tipo="PROFESSOR",
+            email="maria@email.com",  # Email que será testado como duplicado
+            ativoDeRegistro="2025-01-15T10:30:00Z",
+            status="ATIVO"
+        )
+        # Inicializa o controller com os usuários de teste
+        self.client = uc.UsuarioController(usuarios=[self.usuario_valido, self.usuario_existente])
     
     def test_update_usuario_dados_validos(self):
         """Teste: deve atualizar usuário com dados válidos"""
