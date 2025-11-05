@@ -3,9 +3,7 @@ from urllib.parse import parse_qs
 from Model.Despesa import Despesa
 import controler as ctl
 from html import escape
-from Controller import usuario as uc
-from View_and_Interface.interfaces import usuario as uv
-from urllib.parse import urlparse, parse_qs
+
 
 def _esc(v):
     return escape("" if v is None else str(v))
@@ -14,10 +12,9 @@ def _esc(v):
 comTrole = ctl.Controler(True)
 itens_list = comTrole.Get_Despesas()
 bancos = comTrole.get_Bancos_List()
-controller = uc.UsuarioController()
 
 
-class MainController(BaseHTTPRequestHandler):
+class DespesaController(BaseHTTPRequestHandler):
 
     def do_GET(self):
         if self.path == "/":
@@ -75,42 +72,6 @@ class MainController(BaseHTTPRequestHandler):
             self.send_header("Content-type", "text/html; charset=utf-8")
             self.end_headers()
             self.wfile.write(conteudo)
-        
-        elif self.path == "/usuarios":
-            conteudo = uv.UsuarioViewer.call_menu()
-
-            self.send_response(200)
-            self.send_header("Content-type", "text/html; charset=utf-8")
-            self.end_headers()
-            self.wfile.write(conteudo)
-
-        elif self.path == "/listar_usuarios":
-            conteudo = uv.UsuarioViewer.call_listar(controller=controller)
-
-            self.send_response(200)
-            self.send_header("Content-type", "text/html; charset=utf-8")
-            self.end_headers()
-            self.wfile.write(conteudo.encode("utf-8"))
-
-        elif self.path == "/cadastrar_usuario":
-            conteudo = uv.UsuarioViewer.call_cadastrar()
-
-            self.send_response(200)
-            self.send_header("Content-type", "text/html; charset=utf-8")
-            self.end_headers()
-            self.wfile.write(conteudo.encode("utf-8"))
-
-        elif  "/atualizar_usuario" in self.path:
-            parsed_url = urlparse(self.path)
-            query_params = parse_qs(parsed_url.query)
-            user_id = query_params.get('id', [''])[0]
-
-            conteudo = uv.UsuarioViewer.call_atualizar(controller=controller, user_id=user_id)
-
-            self.send_response(200)
-            self.send_header("Content-type", "text/html; charset=utf-8")
-            self.end_headers()
-            self.wfile.write(conteudo.encode("utf-8"))
 
     def do_POST(self):
         if self.path == "/cadastrar":
@@ -148,90 +109,6 @@ class MainController(BaseHTTPRequestHandler):
             self.send_header("Content-type", "text/html; charset=utf-8")
             self.end_headers()
             self.wfile.write(conteudo.encode("utf-8"))
-
-        # Check for POST request to /atualizar_usuario and which button was pressed
-        elif "/atualizar_usuario" in self.path:
-            tamanho = int(self.headers["Content-Length"])
-            dados = self.rfile.read(tamanho).decode("utf-8")
-            params = parse_qs(dados)
-            
-            # Check which button was pressed
-            if "btn_atualizar" in params:
-                # Handle update button
-                parsed_url = urlparse(self.path)
-                query_params = parse_qs(parsed_url.query)
-                user_id = query_params.get('id', [''])[0]
-                
-                # Validate user_id
-                if not user_id or not user_id.strip():
-                    self.send_response(400)
-                    self.send_header("Content-type", "text/html; charset=utf-8")
-                    self.end_headers()
-                    self.wfile.write(b"<h1>400 - ID do usuario nao fornecido</h1>")
-                    return
-                
-                # Extract form data for updating
-                nome = params.get("nome", [""])[0]
-                matricula = params.get("matricula", [""])[0]
-                tipo = params.get("tipo", [""])[0]
-                email = params.get("email", [""])[0]
-                ativoDeRegistro = params.get("ativoDeRegistro", [""])[0]
-                status = params.get("status", [""])[0]
-                
-                user_dict = {
-                    "nome": nome,
-                    "matricula": matricula,
-                    "tipo": tipo,
-                    "email": email,
-                    "ativoDeRegistro": ativoDeRegistro,
-                    "status": status
-                }
-                
-                try:
-                    controller.atualizar(int(user_id), user_dict)
-                    # Redirect to user list after successful update
-                    self.send_response(302)
-                    self.send_header("Location", "/listar_usuarios")
-                    self.end_headers()
-                except Exception as e:
-                    # Handle update error
-                    conteudo = uv.UsuarioViewer.call_atualizar(controller=controller, user_id=user_id)
-                    conteudo = conteudo.replace("<!--MENSAGEM_ERRO-->", f"<p class='erro'>Erro ao atualizar usuário: {e}</p>")
-                    
-                    self.send_response(200)
-                    self.send_header("Content-type", "text/html; charset=utf-8")
-                    self.end_headers()
-                    self.wfile.write(conteudo.encode("utf-8"))
-                    
-            elif "btn_excluir" in params:
-                # Handle delete button
-                parsed_url = urlparse(self.path)
-                query_params = parse_qs(parsed_url.query)
-                user_id = query_params.get('id', [''])[0]
-                
-                # Validate user_id
-                if not user_id or not user_id.strip():
-                    self.send_response(400)
-                    self.send_header("Content-type", "text/html; charset=utf-8")
-                    self.end_headers()
-                    self.wfile.write(b"<h1>400 - ID do usuario nao fornecido</h1>")
-                    return
-                
-                try:
-                    controller.deletar(int(user_id))
-                    # Redirect to user list after successful deletion
-                    self.send_response(302)
-                    self.send_header("Location", "/listar_usuarios")
-                    self.end_headers()
-                except Exception as e:
-                    # Handle deletion error
-                    conteudo = uv.UsuarioViewer.call_atualizar(controller=controller, user_id=user_id)
-                    conteudo = conteudo.replace("<!--MENSAGEM_ERRO-->", f"<p class='erro'>Erro ao excluir usuário: {e}</p>")
-                    
-                    self.send_response(200)
-                    self.send_header("Content-type", "text/html; charset=utf-8")
-                    self.end_headers()
-                    self.wfile.write(conteudo.encode("utf-8"))
 
         elif self.path == "/calcular_total":
             tamanho = int(self.headers["Content-Length"])
@@ -275,50 +152,6 @@ class MainController(BaseHTTPRequestHandler):
                 self.send_header("Content-type", "text/html; charset=utf-8")
                 self.end_headers()
                 self.wfile.write(conteudo.encode("utf-8"))
-        elif self.path == "/cadastrar_usuario":
-            try:
-                tamanho = int(self.headers["Content-Length"])
-                dados = self.rfile.read(tamanho).decode("utf-8")
-                params = parse_qs(dados)
-
-
-                nome = params.get("nome", "")
-                matricula = params.get("matricula", "")
-                tipo = params.get("tipo", "")
-                email = params.get("email", "")
-                ativoDeRegistro = params.get("ativoDeRegistro", "")
-                status = params.get("status", "")
-
-                print(f"Recebeu dados: {nome}, {matricula}, {tipo}, {email}, {ativoDeRegistro}, {status}")
-
-                user_dict = {
-                    "nome": nome[0] if nome else "",
-                    "matricula": matricula[0] if matricula else "",
-                    "tipo": tipo[0] if tipo else "",
-                    "email": email[0] if email else "",
-                    "ativoDeRegistro": ativoDeRegistro[0] if ativoDeRegistro else "",
-                    "status": status[0] if status else ""
-                }
-
-                controller.criar(dados=user_dict)
-                print("Usuário criado com sucesso.")
-                # Redireciona para a lista de usuários
-                self.send_response(302)
-                self.send_header("Location", "/listar_usuarios")
-                self.end_headers()
-            except Exception as e:
-                # Redireciona para a página de cadastro com erro
-                conteudo = uv.UsuarioViewer.call_cadastrar()
-                # Substitui placeholder de erro se existir no template
-                conteudo = conteudo.replace("<!--MENSAGEM_ERRO-->", f"<p class='erro'>Erro ao cadastrar usuário: {e}</p>")
-                
-                self.send_response(200)
-                self.send_header("Content-type", "text/html; charset=utf-8")
-                self.end_headers()
-                self.wfile.write(conteudo.encode("utf-8"))
-                print(f"Erro ao criar usuário: {e}")
-
-            
 
         elif self.path == "/cadastrar_conta":
             content_length = int(self.headers['Content-Length'])
@@ -341,10 +174,3 @@ class MainController(BaseHTTPRequestHandler):
             self.wfile.write(
                 b"<h3>Conta bancaria cadastrada com sucesso!</h3>")
             self.wfile.write(b'<a href="/menu">Voltar ao menu</a>')
-
-        elif self.path == "/user":
-            self.send_response(200)
-            self.send_header("Content-type", "text/html; charset=utf-8")
-            self.end_headers()
-            self.wfile.write(b"<h1>User endpoint</h1>")
-
