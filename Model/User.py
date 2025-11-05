@@ -6,10 +6,13 @@ class User():
 
     def set_login(self, login):
         self.login = login  
+
     def get_login(self):  
         return self.login
+
     def set_senha(self, senha):
         self.senha = senha
+        
     def get_senha(self):  
         return self.senha
     
