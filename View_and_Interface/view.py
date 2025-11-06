@@ -1,7 +1,9 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import parse_qs, urlparse
 from html import escape
+from controller import UsuarioController
 
+usuario = UsuarioController()
 
 def _esc(v):
     """Escapa valores HTML para evitar XSS"""
@@ -87,14 +89,40 @@ class BibliotecaView(BaseHTTPRequestHandler):
                 <a href="/cadastro/novo" class="btn btn-primary">+ Novo Usuario</a>
             </div>
             <div class="table-container">
-                <div class="empty-state">
-                    <h3>Funcionalidade nao implementada</h3>
-                    <p>Os alunos devem implementar a classe <strong>Usuario</strong> em <code>Model/Usuario.py</code></p>
-                    <p>e integrar via <code>controler.py</code> para listar usuarios aqui.</p>
-                </div>
-            </div>
+                <table>
+                    <thead>
+                        <tr>
+                        <th>Nome</th>
+                        <th>Matricula</th>
+                        <th>Tipo</th>
+                        <th>Email</th>
+                        <th>Data de Registro</th>
+                        <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody> 
         """
         
+        usuarios = usuario.listar()
+
+        for u in usuarios:
+            print(u)
+            conteudo += f'''
+                <tr>
+                    <td>{ u.nome }</td>
+                    <td>{ u.matricula }</td>
+                    <td>{ u.tipo }</td>
+                    <td>{ u.email }</td>
+                    <td>{ u.ativoDeRegistro }</td>
+                    <td>{ u.status }</td>
+                </tr>
+            '''
+        conteudo += """ 
+                    </tbody>
+                </table>
+            </div> """
+
+
         html = html.replace('<!--CONTEUDO-->', conteudo)
         self.send_html(html)
     
@@ -119,14 +147,27 @@ class BibliotecaView(BaseHTTPRequestHandler):
                         <label>Tipo de Usuario *</label>
                         <select name="tipo" required>
                             <option value="">Selecione...</option>
-                            <option value="aluno">Aluno</option>
-                            <option value="professor">Professor</option>
-                            <option value="funcionario">Funcionario</option>
+                            <option value="ALUNO">Aluno</option>
+                            <option value="PROFESSOR">Professor</option>
+                            <option value="FUNCIONARIO">Funcionario</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label>Email</label>
                         <input type="email" name="email">
+                    </div>
+                    <div class="form-group">
+                        <label>Status do Usuario *</label>
+                        <select name="status" required>
+                            <option value="">Selecione...</option>
+                            <option value="ATIVO">Ativo</option>
+                            <option value="INATIVO">Inativo</option>
+                            <option value="SUSPENSO">Suspenso</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Data de registro</label>
+                        <input type="date" name="ativoDeRegistro">
                     </div>
                     <div class="form-actions">
                         <a href="/cadastro" class="btn btn-secondary" style="background: #6b7280; color: white; text-decoration: none;">Cancelar</a>
@@ -144,20 +185,33 @@ class BibliotecaView(BaseHTTPRequestHandler):
         with open("View_and_Interface/cadastro.html", "r", encoding="utf-8") as f:
             html = f.read()
         
-        # TODO: Salvar via controler.py
+        try:
+            usuario.criar(data)
+
+        except (ValueError) as ve:
+            mensagem = f'''
+                <div class="alert alert-error">
+                    <strong>Erro ao salvar usuario:</strong> {_esc(str(ve))}
+                </div>
+                <a href="/cadastro/novo" class="btn btn-primary">Voltar para formulario</a>
+            '''
+            
+            html = html.replace('<!--CONTEUDO-->', mensagem)
+            self.send_html(html)
+            return
+        
+
         mensagem = f'''
             <div class="alert alert-success">
                 Dados recebidos com sucesso!
-            </div>
-            <div class="alert alert-error">
-                <strong>Funcionalidade nao implementada:</strong> Os alunos devem implementar
-                a classe Usuario em Model/Usuario.py e integrar via controler.py
             </div>
             <div style="background: white; padding: 20px; border-radius: 12px;">
                 <h3>Dados enviados:</h3>
                 <p><strong>Matricula:</strong> {_esc(data.get('matricula'))}</p>
                 <p><strong>Nome:</strong> {_esc(data.get('nome'))}</p>
+                <p><strong>Status:</strong> {_esc(data.get('status'))}</p>
                 <p><strong>Tipo:</strong> {_esc(data.get('tipo'))}</p>
+                <p><strong>Data de Registro:</strong> {_esc(data.get('ativoDeRegistro'))}</p>
                 <p><strong>Email:</strong> {_esc(data.get('email', 'Nao informado'))}</p>
             </div>
             <br>
