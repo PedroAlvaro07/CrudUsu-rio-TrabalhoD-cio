@@ -24,10 +24,37 @@ Exemplos de testes a implementar:
 - test_listar_emprestimos_atrasados()
 """
 
+from Model import Livro as l
+from Model import Usuario as u
+from Model import Emprestimo as e
+
 class Relatorio:
     """
-    Classe responsável por gerar relatórios e estatísticas
-    
-    TODO: Implementar usando TDD
+    Classe responsável por gerar relatórios e estatísticas do sistema.
+    Espera receber listas de objetos (usuarios, livros, emprestimos)
+    vindos de outros módulos do projeto.
     """
-    pass
+
+    def __init__(self, usuarios, livros, emprestimos):
+        self.usuarios = usuarios or []
+        self.livros = livros or []
+        self.emprestimos = emprestimos or []
+
+    def get_livros(self) -> list[l.Livro]:
+        return self.livros
+
+    def get_usuarios(self) -> list[u.Usuario]:
+        return self.usuarios
+    
+    def get_emprestimos(self) -> list[e.Emprestimo]:
+        return self.emprestimos
+
+    def set_livros(self, livros):
+        self.livros = livros or []
+
+    def set_usuarios(self, usuarios):
+        self.usuarios = usuarios or []
+
+    def set_emprestimos(self, emprestimos):
+        self.emprestimos = emprestimos or []
+

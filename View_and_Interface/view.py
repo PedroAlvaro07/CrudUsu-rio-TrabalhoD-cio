@@ -1,9 +1,17 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import parse_qs, urlparse
 from html import escape
-from controller import UsuarioController
+from controler import UsuarioController
+from controler import LivroController
+from controler import RelatorioController
+from controler import EmprestimoController
+from datetime import datetime
+from collections import Counter
 
 usuario = UsuarioController()
+livro = LivroController()
+emprestimo = EmprestimoController()
+relatorio = RelatorioController(usuario.listar(), livro.listar_livros(), emprestimo.listar())
 
 def _esc(v):
     """Escapa valores HTML para evitar XSS"""
@@ -50,6 +58,8 @@ class BibliotecaView(BaseHTTPRequestHandler):
         # Modulo 4: Relatorios
         elif path == '/relatorios':
             self.render_relatorios()
+        elif path == '/relatorios/usuarios-ativos':
+            self.render_usuarios_ativos()
         
         else:
             self.send_error(404, "Pagina nao encontrada")
@@ -62,6 +72,7 @@ class BibliotecaView(BaseHTTPRequestHandler):
         content_length = int(self.headers.get('Content-Length', 0))
         body = self.rfile.read(content_length).decode('utf-8')
         params = parse_qs(body)
+        print(params)
         
         # Converte para dict simples
         data = {k: v[0] if len(v) == 1 else v for k, v in params.items()}
@@ -82,7 +93,6 @@ class BibliotecaView(BaseHTTPRequestHandler):
         with open("View_and_Interface/cadastro.html", "r", encoding="utf-8") as f:
             html = f.read()
         
-        # TODO: Buscar usuarios via controler.py
         conteudo = """
             <div class="actions">
                 <h2>Lista de Usuarios</h2>
@@ -104,16 +114,18 @@ class BibliotecaView(BaseHTTPRequestHandler):
         """
         
         usuarios = usuario.listar()
-
+        
         for u in usuarios:
-            print(u)
+            data_obj = datetime.fromisoformat(u.ativoDeRegistro.replace("Z", "+00:00"))
+            data_formatada = data_obj.strftime("%d-%m-%Y")
+
             conteudo += f'''
                 <tr>
                     <td>{ u.nome }</td>
                     <td>{ u.matricula }</td>
                     <td>{ u.tipo }</td>
                     <td>{ u.email }</td>
-                    <td>{ u.ativoDeRegistro }</td>
+                    <td>{ data_formatada }</td>
                     <td>{ u.status }</td>
                 </tr>
             '''
@@ -233,19 +245,37 @@ class BibliotecaView(BaseHTTPRequestHandler):
                 <a href="/livros" class="tab active">Livros</a>
                 <a href="/autores" class="tab">Autores</a>
             </div>
-            <div class="actions" style="justify-content: space-between; display: flex;">
-                <h2>Catalogo de Livros</h2>
+            <div class="actions">
+                <h2>Lista de Livros</h2>
                 <a href="/livros/novo" class="btn btn-primary">+ Novo Livro</a>
             </div>
             <div class="table-container">
-                <div class="empty-state">
-                    <h3>Funcionalidade nao implementada</h3>
-                    <p>Os alunos devem implementar a classe <strong>Livro</strong> em <code>Model/Livro.py</code></p>
-                    <p>e integrar via <code>controler.py</code> para listar livros aqui.</p>
-                </div>
-            </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Titulo</th>
+                            <th>Autor</th>
+                            <th>ISBN</th>
+                        </tr>
+                    </thead>
+                    <tbody> 
         '''
         
+        livros = livro.listar_livros()
+        
+        for l in livros:
+            conteudo += f'''
+                <tr>
+                    <td>{ l.titulo }</td>
+                    <td>{ l.autor }</td>
+                    <td>{ l.isbn }</td>
+                </tr>
+            '''
+        conteudo += """ 
+                    </tbody>
+                </table>
+            </div> """
+
         html = html.replace('<!--CONTEUDO-->', conteudo)
         self.send_html(html)
     
@@ -260,17 +290,34 @@ class BibliotecaView(BaseHTTPRequestHandler):
                 <a href="/autores" class="tab active">Autores</a>
             </div>
             <div class="actions" style="justify-content: space-between; display: flex;">
-                <h2>Lista de Autores</h2>
-                <a href="#" class="btn btn-primary">+ Novo Autor</a>
+                <h2>Lista de Autores dos livros da base</h2>
             </div>
             <div class="table-container">
-                <div class="empty-state">
-                    <h3>Funcionalidade nao implementada</h3>
-                    <p>Os alunos devem implementar a classe <strong>Autor</strong> em <code>Model/Autor.py</code></p>
-                    <p>e integrar via <code>controler.py</code> para listar autores aqui.</p>
-                </div>
-            </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>Nome do autor</th>
+                        </tr>
+                    </thead>
+                    <tbody> 
         '''
+        
+        autores = livro.listar_autores()
+        id = 0
+        
+        for a in autores:
+            id += 1
+            conteudo += f'''
+                <tr>
+                    <td>{ id }</td>
+                    <td>{ a }</td>
+                </tr>
+            '''
+        conteudo += """ 
+                    </tbody>
+                </table>
+            </div> """
         
         html = html.replace('<!--CONTEUDO-->', conteudo)
         self.send_html(html)
@@ -285,26 +332,17 @@ class BibliotecaView(BaseHTTPRequestHandler):
                 <h2>Novo Livro</h2>
                 <form action="/livros/salvar" method="post">
                     <div class="form-group">
-                        <label>ISBN *</label>
-                        <input type="text" name="isbn" required>
+                        <label for="titulo">Título:</label>
+                        <input type="text" id="titulo" name="titulo" required>
                     </div>
                     <div class="form-group">
-                        <label>Titulo *</label>
-                        <input type="text" name="titulo" required>
+                        <label for="autor">Autor:</label>
+                        <input type="text" id="autor" name="autor" required>
                     </div>
+                    
                     <div class="form-group">
-                        <label>Categoria *</label>
-                        <select name="categoria" required>
-                            <option value="">Selecione...</option>
-                            <option value="Ficcao">Ficcao</option>
-                            <option value="Tecnico">Tecnico</option>
-                            <option value="Didatico">Didatico</option>
-                            <option value="Cientifico">Cientifico</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Quantidade em Estoque *</label>
-                        <input type="number" name="estoque" min="0" required>
+                        <label for="isbn">ISBN:</label>
+                        <input type="text" id="isbn" name="isbn" required>
                     </div>
                     <div class="form-actions">
                         <a href="/livros" class="btn btn-secondary" style="background: #6b7280; color: white; text-decoration: none;">Cancelar</a>
@@ -322,20 +360,30 @@ class BibliotecaView(BaseHTTPRequestHandler):
         with open("View_and_Interface/crud_livros.html", "r", encoding="utf-8") as f:
             html = f.read()
         
+        try:
+            livro.criar_livro(data)
+
+        except (ValueError) as ve:
+            mensagem = f'''
+                <div class="alert alert-error">
+                    <strong>Erro ao salvar livro:</strong> {_esc(str(ve))}
+                </div>
+                <a href="/livros/novo" class="btn btn-primary">Voltar para formulario</a>
+            '''
+            
+            html = html.replace('<!--CONTEUDO-->', mensagem)
+            self.send_html(html)
+            return
+
         mensagem = f'''
             <div class="alert alert-success">
                 Dados recebidos com sucesso!
-            </div>
-            <div class="alert alert-error">
-                <strong>Funcionalidade nao implementada:</strong> Os alunos devem implementar
-                a classe Livro em Model/Livro.py e integrar via controler.py
             </div>
             <div style="background: white; padding: 20px; border-radius: 12px;">
                 <h3>Dados enviados:</h3>
                 <p><strong>ISBN:</strong> {_esc(data.get('isbn'))}</p>
                 <p><strong>Titulo:</strong> {_esc(data.get('titulo'))}</p>
-                <p><strong>Categoria:</strong> {_esc(data.get('categoria'))}</p>
-                <p><strong>Estoque:</strong> {_esc(data.get('estoque'))}</p>
+                <p><strong>Autor:</strong> {_esc(data.get('autor'))}</p>
             </div>
             <br>
             <a href="/livros" class="btn btn-primary">Voltar para catalogo</a>
@@ -351,19 +399,23 @@ class BibliotecaView(BaseHTTPRequestHandler):
         with open("View_and_Interface/emprestimos.html", "r", encoding="utf-8") as f:
             html = f.read()
         
-        conteudo = '''
+        emprestimos_ativos = len([emp for emp in emprestimo.listar() if emp.status == "ATIVO"])
+        emprestimos_atrasados = len([emp for emp in emprestimo.listar() if emp.esta_em_atraso()])
+        devolvidos_hoje = len([emp for emp in emprestimo.listar() if emp.return_date and emp.return_date.date() == datetime.now().date()])
+
+        conteudo = f'''
             <div class="stats">
                 <div class="stat-card">
                     <h3>Emprestimos Ativos</h3>
-                    <div class="value">?</div>
+                    <div class="value">{ emprestimos_ativos }</div>
                 </div>
                 <div class="stat-card">
                     <h3>Emprestimos em Atraso</h3>
-                    <div class="value">?</div>
+                    <div class="value">{ emprestimos_atrasados }</div>
                 </div>
                 <div class="stat-card">
                     <h3>Devolvidos Hoje</h3>
-                    <div class="value">?</div>
+                    <div class="value">{ emprestimos_atrasados }</div>
                 </div>
             </div>
             <div class="actions" style="justify-content: space-between; display: flex;">
@@ -371,15 +423,31 @@ class BibliotecaView(BaseHTTPRequestHandler):
                 <a href="/emprestimos/novo" class="btn btn-primary">+ Novo Emprestimo</a>
             </div>
             <div class="table-container">
-                <div class="empty-state">
-                    <h3>Funcionalidade nao implementada</h3>
-                    <p>Os alunos devem implementar a classe <strong>Emprestimo</strong> em <code>Model/Emprestimo.py</code></p>
-                    <p>e integrar via <code>controler.py</code> para listar emprestimos aqui.</p>
-                    <p><strong>Nota:</strong> Este modulo depende de Usuario e Livro implementados!</p>
-                </div>
-            </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome do responsável</th>
+                            <th>Titulo do livro</th>
+                        </tr>
+                    </thead>
+                    <tbody> 
         '''
         
+        emprestimos = emprestimo.listar()
+        
+        for e in emprestimos:
+            conteudo += f'''
+                <tr>
+                    <td>{ e.usuario.nome }</td>
+                    <td>{ e.livro.titulo }</td>
+                </tr>
+            '''
+            
+        conteudo += """ 
+                    </tbody>
+                </table>
+            </div> """
+
         html = html.replace('<!--CONTEUDO-->', conteudo)
         self.send_html(html)
     
@@ -388,7 +456,9 @@ class BibliotecaView(BaseHTTPRequestHandler):
         with open("View_and_Interface/emprestimos.html", "r", encoding="utf-8") as f:
             html = f.read()
         
-        conteudo = '''
+
+
+        conteudo = f'''
             <div class="form-container">
                 <h2>Novo Emprestimo</h2>
                 <form action="/emprestimos/salvar" method="post">
@@ -396,12 +466,14 @@ class BibliotecaView(BaseHTTPRequestHandler):
                         <label>Usuario *</label>
                         <select name="usuario_id" required>
                             <option value="">Selecione um usuario...</option>
+                            {''.join([f'<option value="{_esc(u.matricula)}">{_esc(u.nome)} ({_esc(u.matricula)})</option>' for u in usuario.listar()])}
                         </select>
                     </div>
                     <div class="form-group">
                         <label>Livro *</label>
                         <select name="livro_id" required>
                             <option value="">Selecione um livro...</option>
+                            {''.join([f'<option value="{_esc(l.isbn)}">{_esc(l.titulo)} ({_esc(l.isbn)})</option>' for l in livro.listar_livros()])}
                         </select>
                     </div>
                     <div class="form-group">
@@ -457,6 +529,12 @@ class BibliotecaView(BaseHTTPRequestHandler):
         with open("View_and_Interface/relatorios.html", "r", encoding="utf-8") as f:
             html = f.read()
         
+        relatorio.carregar_dados(
+            usuarios=usuario.listar(),
+            livros=livro.listar_livros(),
+            emprestimos=emprestimo.listar() 
+        )
+
         conteudo = '''
             <div class="report-cards">
                 <div class="report-card">
@@ -469,11 +547,13 @@ class BibliotecaView(BaseHTTPRequestHandler):
                     <h3>Livros Mais Emprestados</h3>
                     <p>Ranking de popularidade</p>
                 </div>
-                <div class="report-card">
-                    <div class="icon">Users</div>
-                    <h3>Usuarios Mais Ativos</h3>
-                    <p>Top usuarios por emprestimos</p>
-                </div>
+                <a href="/relatorios/usuarios-ativos" class="report-card-link">
+                    <div class="report-card">
+                        <div class="icon">Users</div>
+                        <h3>Usuarios Mais Ativos</h3>
+                        <p>Top usuarios por emprestimos</p>
+                    </div>
+                </a>
                 <div class="report-card">
                     <div class="icon">Chart</div>
                     <h3>Taxa de Ocupacao</h3>
@@ -487,6 +567,55 @@ class BibliotecaView(BaseHTTPRequestHandler):
                 <p><strong>Nota:</strong> Este modulo depende de TODOS os outros modulos!</p>
             </div>
         '''
+        
+        html = html.replace('<!--CONTEUDO-->', conteudo)
+        self.send_html(html)
+
+    def render_usuarios_ativos(self):
+        """Renderiza pagina de usuarios mais ativos"""
+        with open("View_and_Interface/relatorios.html", "r", encoding="utf-8") as f:
+            html = f.read()
+
+        relatorio.carregar_dados(
+            usuarios=usuario.listar(),
+            livros=livro.listar_livros(),
+            emprestimos=emprestimo.listar()
+        )
+
+        usuarios = relatorio.usuarios_mais_ativos()
+
+        print(usuarios)
+
+        conteudo = '''
+            <div class="actions">
+                <h2>Lista de Usuarios mais ativos</h2>
+                <a href="/cadastro/novo" class="btn btn-primary">+ Novo Usuario</a>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome do usuário</th>
+                            <th>Quantidade de Livros emprestados</th>
+                        </tr>
+                    </thead>
+                    <tbody> 
+        '''
+        
+        for u in usuarios:
+            conteudo += f'''
+                <tr>
+                    <td>{ u['usuario'].nome }</td>
+                    <td>{ u['quantidade'] }</td>
+                </tr>
+            '''
+        conteudo += """ 
+                    </tbody>
+                </table>
+            </div> 
+            <a href="/relatorios" class="btn btn-primary">Voltar para menu de relatórios</a>
+            <a href="/emprestimos/novo" class="btn btn-primary">Voltar para formulario de emprestimo</a>
+        """
         
         html = html.replace('<!--CONTEUDO-->', conteudo)
         self.send_html(html)

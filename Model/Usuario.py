@@ -147,3 +147,21 @@ class Usuario:
             ativoDeRegistro=current_values['ativoDeRegistro'],
             status=current_values['status']
         )
+
+    def to_dict(self):
+        """
+        Serializa o usuário para um dicionário.
+        
+        Returns:
+            dict: Dicionário com os atributos do usuário
+        """
+        return {
+            "id": str(self.id),
+            "nome": self.nome,
+            "matricula": self.matricula,
+            "tipo": self.tipo.value,
+            "email": self.email,
+            "ativoDeRegistro": self.ativoDeRegistro,
+            "status": self.status.value
+        }
+        
