@@ -40,6 +40,8 @@ class BibliotecaView(BaseHTTPRequestHandler):
             self.render_cadastro()
         elif path == '/cadastro/novo':
             self.render_form_usuario()
+        elif path in '/cadastro/editar?matricula=':
+            self.render_form_usuario_edit()
         
         # Modulo 2: Catalogo de Livros
         elif path == '/livros':
@@ -79,6 +81,8 @@ class BibliotecaView(BaseHTTPRequestHandler):
         
         if path == '/cadastro/salvar':
             self.processar_usuario(data)
+        elif path == '/cadastro/editar':
+            self.editar_usuario(data)
         elif path == '/livros/salvar':
             self.processar_livro(data)
         elif path == '/emprestimos/salvar':
@@ -120,7 +124,7 @@ class BibliotecaView(BaseHTTPRequestHandler):
             data_formatada = data_obj.strftime("%d-%m-%Y")
 
             conteudo += f'''
-                <tr>
+                <tr onclick="window.location.href='/cadastro/editar?matricula={u.id}'" style="cursor: pointer;">
                     <td>{ u.nome }</td>
                     <td>{ u.matricula }</td>
                     <td>{ u.tipo }</td>
@@ -135,6 +139,63 @@ class BibliotecaView(BaseHTTPRequestHandler):
             </div> """
 
 
+        html = html.replace('<!--CONTEUDO-->', conteudo)
+        self.send_html(html)
+
+    def render_form_usuario_edit(self):
+        """Renderiza formulario de cadastro de usuario"""
+        with open("View_and_Interface/cadastro.html", "r", encoding="utf-8") as f:
+            html = f.read()
+
+        id = self.path.split('=')[1]
+        usuarioEdit = usuario.obter_por_id(int(id))
+        
+        conteudo = f'''
+            <div class="form-container">
+            <h2>Editar Usuario</h2>
+            <form action="/cadastro/salvar" method="post">
+                <div class="form-group">
+                <label>Matricula *</label>
+                <input type="text" name="matricula" value="{_esc(usuarioEdit.matricula)}" required>
+                </div>
+                <div class="form-group">
+                <label>Nome Completo *</label>
+                <input type="text" name="nome" value="{_esc(usuarioEdit.nome)}" required>
+                </div>
+                <div class="form-group">
+                <label>Tipo de Usuario *</label>
+                <select name="tipo" required>
+                    <option value="">Selecione...</option>
+                    <option value="ALUNO" {"selected" if usuarioEdit.tipo == "ALUNO" else ""}>Aluno</option>
+                    <option value="PROFESSOR" {"selected" if usuarioEdit.tipo == "PROFESSOR" else ""}>Professor</option>
+                    <option value="FUNCIONARIO" {"selected" if usuarioEdit.tipo == "FUNCIONARIO" else ""}>Funcionario</option>
+                </select>
+                </div>
+                <div class="form-group">
+                <label>Email</label>
+                <input type="email" name="email" value="{_esc(usuarioEdit.email if usuarioEdit.email else '')}">
+                </div>
+                <div class="form-group">
+                <label>Status do Usuario *</label>
+                <select name="status" required>
+                    <option value="">Selecione...</option>
+                    <option value="ATIVO" {"selected" if usuarioEdit.status == "ATIVO" else ""}>Ativo</option>
+                    <option value="INATIVO" {"selected" if usuarioEdit.status == "INATIVO" else ""}>Inativo</option>
+                    <option value="SUSPENSO" {"selected" if usuarioEdit.status == "SUSPENSO" else ""}>Suspenso</option>
+                </select>
+                </div>
+                <div class="form-group">
+                <label>Data de registro</label>
+                <input type="date" name="ativoDeRegistro" value="{_esc(usuarioEdit.ativoDeRegistro[:10] if usuarioEdit.ativoDeRegistro else '')}">
+                </div>
+                <div class="form-actions">
+                <a href="/editar" class="btn btn-secondary" style="background: #6b7280; color: white; text-decoration: none;">Cancelar</a>
+                <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+            </div>
+        '''
+        
         html = html.replace('<!--CONTEUDO-->', conteudo)
         self.send_html(html)
     
@@ -191,7 +252,48 @@ class BibliotecaView(BaseHTTPRequestHandler):
         
         html = html.replace('<!--CONTEUDO-->', conteudo)
         self.send_html(html)
-    
+
+    def editar_usuario(self, data):
+        """Processa formulario de usuario (exibe dados mas nao salva)"""
+        with open("View_and_Interface/cadastro.html", "r", encoding="utf-8") as f:
+            html = f.read()
+        
+        try:
+            usuario.atualizar(data)
+
+        except (ValueError) as ve:
+            mensagem = f'''
+                <div class="alert alert-error">
+                    <strong>Erro ao salvar usuario:</strong> {_esc(str(ve))}
+                </div>
+                <a href="/cadastro/novo" class="btn btn-primary">Voltar para formulario</a>
+            '''
+            
+            html = html.replace('<!--CONTEUDO-->', mensagem)
+            self.send_html(html)
+            return
+        
+
+        mensagem = f'''
+            <div class="alert alert-success">
+                Dados recebidos com sucesso!
+            </div>
+            <div style="background: white; padding: 20px; border-radius: 12px;">
+                <h3>Dados enviados:</h3>
+                <p><strong>Matricula:</strong> {_esc(data.get('matricula'))}</p>
+                <p><strong>Nome:</strong> {_esc(data.get('nome'))}</p>
+                <p><strong>Status:</strong> {_esc(data.get('status'))}</p>
+                <p><strong>Tipo:</strong> {_esc(data.get('tipo'))}</p>
+                <p><strong>Data de Registro:</strong> {_esc(data.get('ativoDeRegistro'))}</p>
+                <p><strong>Email:</strong> {_esc(data.get('email', 'Nao informado'))}</p>
+            </div>
+            <br>
+            <a href="/cadastro" class="btn btn-primary">Voltar para lista</a>
+        '''
+        
+        html = html.replace('<!--CONTEUDO-->', mensagem)
+        self.send_html(html)
+
     def processar_usuario(self, data):
         """Processa formulario de usuario (exibe dados mas nao salva)"""
         with open("View_and_Interface/cadastro.html", "r", encoding="utf-8") as f:
