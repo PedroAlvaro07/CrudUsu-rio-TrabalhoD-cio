@@ -124,7 +124,7 @@ class BibliotecaView(BaseHTTPRequestHandler):
             data_formatada = data_obj.strftime("%d-%m-%Y")
 
             conteudo += f'''
-                <tr onclick="window.location.href='/cadastro/editar?matricula={u.id}'" style="cursor: pointer;">
+                <tr onclick="window.location.href='/cadastro/editar?id={u.id}'" style="cursor: pointer;">
                     <td>{ u.nome }</td>
                     <td>{ u.matricula }</td>
                     <td>{ u.tipo }</td>
@@ -153,7 +153,7 @@ class BibliotecaView(BaseHTTPRequestHandler):
         conteudo = f'''
             <div class="form-container">
             <h2>Editar Usuario</h2>
-            <form action="/cadastro/salvar" method="post">
+            <form action="/cadastro/editar?id={_esc(usuarioEdit.id)}" method="post">
                 <div class="form-group">
                 <label>Matricula *</label>
                 <input type="text" name="matricula" value="{_esc(usuarioEdit.matricula)}" required>
@@ -184,12 +184,8 @@ class BibliotecaView(BaseHTTPRequestHandler):
                     <option value="SUSPENSO" {"selected" if usuarioEdit.status == "SUSPENSO" else ""}>Suspenso</option>
                 </select>
                 </div>
-                <div class="form-group">
-                <label>Data de registro</label>
-                <input type="date" name="ativoDeRegistro" value="{_esc(usuarioEdit.ativoDeRegistro[:10] if usuarioEdit.ativoDeRegistro else '')}">
-                </div>
                 <div class="form-actions">
-                <a href="/editar" class="btn btn-secondary" style="background: #6b7280; color: white; text-decoration: none;">Cancelar</a>
+                <a href="/cancelar" class="btn btn-secondary" style="background: #6b7280; color: white; text-decoration: none;">Cancelar</a>
                 <button type="submit" class="btn btn-primary">Salvar</button>
                 </div>
             </form>
@@ -259,7 +255,8 @@ class BibliotecaView(BaseHTTPRequestHandler):
             html = f.read()
         
         try:
-            usuario.atualizar(data)
+            id = self.path.split('=')[1]
+            usuario.atualizar(int(id), data)
 
         except (ValueError) as ve:
             mensagem = f'''
